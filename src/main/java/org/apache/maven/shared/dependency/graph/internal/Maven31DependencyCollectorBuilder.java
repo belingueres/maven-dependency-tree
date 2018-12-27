@@ -45,11 +45,11 @@ import org.eclipse.aether.collection.DependencyCollectionException;
 import org.eclipse.aether.collection.DependencyGraphTransformer;
 import org.eclipse.aether.collection.DependencySelector;
 import org.eclipse.aether.graph.DependencyVisitor;
+import org.eclipse.aether.util.artifact.JavaScopes;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.selector.AndDependencySelector;
 import org.eclipse.aether.util.graph.selector.ExclusionDependencySelector;
 import org.eclipse.aether.util.graph.selector.OptionalDependencySelector;
-import org.eclipse.aether.util.graph.selector.ScopeDependencySelector;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.transformer.JavaScopeDeriver;
 import org.eclipse.aether.util.graph.transformer.JavaScopeSelector;
@@ -96,7 +96,9 @@ public class Maven31DependencyCollectorBuilder
             session.setDependencyGraphTransformer( transformer );
 
             DependencySelector depFilter =
-                new AndDependencySelector( new ScopeDependencySelector(), new OptionalDependencySelector(),
+                new AndDependencySelector( // new ScopeDependencySelector( JavaScopes.TEST ),
+                                           new Maven31DirectScopeDependencySelector( JavaScopes.TEST ),
+                                           new OptionalDependencySelector(),
                                            new ExclusionDependencySelector() );
             session.setDependencySelector( depFilter );
 

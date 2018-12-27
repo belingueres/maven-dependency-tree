@@ -46,12 +46,11 @@ import org.sonatype.aether.collection.DependencyGraphTransformer;
 import org.sonatype.aether.collection.DependencySelector;
 import org.sonatype.aether.graph.DependencyVisitor;
 import org.sonatype.aether.util.DefaultRepositorySystemSession;
-import org.sonatype.aether.util.graph.CloningDependencyVisitor;
+import org.sonatype.aether.util.artifact.JavaScopes;
 import org.sonatype.aether.util.graph.TreeDependencyVisitor;
 import org.sonatype.aether.util.graph.selector.AndDependencySelector;
 import org.sonatype.aether.util.graph.selector.ExclusionDependencySelector;
 import org.sonatype.aether.util.graph.selector.OptionalDependencySelector;
-import org.sonatype.aether.util.graph.selector.ScopeDependencySelector;
 import org.sonatype.aether.util.graph.transformer.ChainedDependencyGraphTransformer;
 import org.sonatype.aether.util.graph.transformer.ConflictMarker;
 import org.sonatype.aether.util.graph.transformer.JavaDependencyContextRefiner;
@@ -77,7 +76,6 @@ public class Maven3DependencyCollectorBuilder
                                                 ProjectBuildingRequest buildingRequest, ArtifactFilter filter )
         throws DependencyGraphBuilderException
     {
-        ClassLoader prevClassLoader = Thread.currentThread().getContextClassLoader();
         try
         {
             MavenProject project = buildingRequest.getProject();
@@ -98,8 +96,9 @@ public class Maven3DependencyCollectorBuilder
             session.setDependencyGraphTransformer( transformer );
 
             DependencySelector depFilter =
-                new AndDependencySelector( new ScopeDependencySelector(), new OptionalDependencySelector(),
-                                           new ExclusionDependencySelector() );
+                new AndDependencySelector( // new ScopeDependencySelector(),
+                                           new Maven3DirectScopeDependencySelector( JavaScopes.TEST ),
+                                           new OptionalDependencySelector(), new ExclusionDependencySelector() );
             session.setDependencySelector( depFilter );
 
             org.sonatype.aether.artifact.Artifact aetherArtifact =
@@ -124,11 +123,11 @@ public class Maven3DependencyCollectorBuilder
 
             org.sonatype.aether.graph.DependencyNode rootNode = collectResult.getRoot();
 
-            CloningDependencyVisitor cloner = new CloningDependencyVisitor();
-            TreeDependencyVisitor treeVisitor = new TreeDependencyVisitor( cloner );
-            rootNode.accept( treeVisitor );
-
-            rootNode = cloner.getRootNode();
+//            CloningDependencyVisitor cloner = new CloningDependencyVisitor();
+//            TreeDependencyVisitor treeVisitor = new TreeDependencyVisitor( cloner );
+//            rootNode.accept( treeVisitor );
+//
+//            rootNode = cloner.getRootNode();
 
             if ( getLogger().isDebugEnabled() )
             {
@@ -140,10 +139,6 @@ public class Maven3DependencyCollectorBuilder
         catch ( DependencyCollectionException e )
         {
             throw new DependencyGraphBuilderException( "Could not collect dependencies: " + e.getResult(), e );
-        }
-        finally
-        {
-            Thread.currentThread().setContextClassLoader( prevClassLoader );
         }
     }
 
